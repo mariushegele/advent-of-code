@@ -28,6 +28,7 @@ defmodule Day2 do
   defp id_of_game_if_possible(game_desc) do
     {game_id, max_draw_counts} = get_game_id_and_max_draw_counts(game_desc)
     max_with_cap = merge_maps_by_maximum_value(max_draw_counts, @max_cube_counts)
+
     if max_with_cap == @max_cube_counts do
       game_id
     else
@@ -38,6 +39,7 @@ defmodule Day2 do
   @spec power_of_game(String.t()) :: number
   defp power_of_game(game_desc) do
     {_, max_draw_counts} = get_game_id_and_max_draw_counts(game_desc)
+
     Map.values(max_draw_counts)
     |> Enum.product()
   end
@@ -56,18 +58,16 @@ defmodule Day2 do
 
   @spec game_max_draw_counts(String.t()) :: map
   defp game_max_draw_counts(draws) do
-    max_draw_counts = draws
+    draws
     |> String.split(";")
     |> Enum.map(&read_draw_cube_counts/1)
     |> Enum.reduce(%{}, &merge_maps_by_maximum_value/2)
   end
 
-
   @spec merge_maps_by_maximum_value(map, map) :: map
   defp merge_maps_by_maximum_value(map1, map2) do
     Map.merge(map1, map2, fn _key, v1, v2 -> max(v1, v2) end)
   end
-
 
   @spec read_draw_cube_counts(String.t()) :: map
   defp read_draw_cube_counts(draw_desc) do
