@@ -23,30 +23,63 @@ defmodule Day3 do
 
     strategy:
       1. convert symbols to a set of points (one-dimensional is sufficient)
-      2. convert numbers to a collection of sets of points indicating their location
+      2. convert numbers to a collection of sets of points indicating their point
       3. for each number: check if any of its points are in set 1.
 
   """
 
   @spec sum_of_adjacent_numbers(String.t()) :: number
   def sum_of_adjacent_numbers(schematic) do
-    symbol_adjacent_point_set = get_symbol_adjacent_point_set(schematic)
-    number_locations = get_number_locations(schematic)
+    symbol_adjacent_point_set = point_set_adjacent_to_any_symbol(schematic, ~r/[^\d\.]/)
+    number_points = get_number_points(schematic)
 
-    get_intersecting_numbers(number_locations, symbol_adjacent_point_set)
+    get_intersecting_numbers(number_points, symbol_adjacent_point_set)
     |> Enum.sum()
   end
 
-  def get_symbol_adjacent_point_set(schematic) do
+  @spec sum_of_gear_ratios(String.t()) :: number
+  def sum_of_gear_ratios(schematic) do
+    stars =
+      symbol_adjacent_points(schematic, ~r/\*/)
+      |> Enum.map(&MapSet.new/1)
+
+    number_points = get_number_points(schematic) |> MapSet.new()
+
+    stars
+    |> Enum.map(fn star_adjacent_points ->
+      symbol_intersecting_numbers(star_adjacent_points, number_points)
+    end)
+    |> Enum.filter(fn number_points -> length(number_points) > 1 end)
+    |> Enum.map(&gear_ratio/1)
+    |> Enum.sum()
+  end
+
+  def symbol_intersecting_numbers(symbol_points, number_points) do
+    Enum.filter(number_points, fn number_point ->
+      number_in_point_set?(number_point, symbol_points)
+    end)
+  end
+
+  defp gear_ratio(number_points) do
+    number_points
+    |> Enum.map(fn {_, {number, _}} -> number end)
+    |> Enum.product()
+  end
+
+  defp point_set_adjacent_to_any_symbol(schematic, symbol_regex) do
+    symbol_adjacent_points(schematic, symbol_regex)
+    |> List.flatten()
+    |> MapSet.new()
+  end
+
+  def symbol_adjacent_points(schematic, symbol_regex) do
     schematic
     |> String.split("\n")
-    |> Enum.map(&parse_symbol_locations/1)
+    |> Enum.map(fn line -> parse_symbol_points(line, symbol_regex) end)
     |> Enum.with_index()
     |> Enum.map(&expand_row_to_coordinates/1)
     |> List.flatten()
     |> Enum.map(&get_adjacent_points/1)
-    |> List.flatten()
-    |> MapSet.new()
   end
 
   defp expand_row_to_coordinates({xs, y}) do
@@ -67,16 +100,16 @@ defmodule Day3 do
     ]
   end
 
-  defp get_number_locations(schematic) do
+  defp get_number_points(schematic) do
     schematic
     |> String.split("\n")
-    |> Enum.map(&parse_number_locations/1)
+    |> Enum.map(&parse_number_points/1)
     |> Enum.with_index()
     |> Enum.map(&expand_row_to_coordinates/1)
     |> List.flatten()
   end
 
-  defp parse_number_locations(schematic_line) do
+  defp parse_number_points(schematic_line) do
     # returns list of tuples {number, {y,x_start, y,x_end}}
     Regex.scan(~r/\d+/, schematic_line, return: :index)
     |> List.flatten()
@@ -88,20 +121,20 @@ defmodule Day3 do
     end)
   end
 
-  defp parse_symbol_locations(schematic_line) do
-    Regex.scan(~r/[^\d\.]/, schematic_line, return: :index)
+  defp parse_symbol_points(schematic_line, symbol_regex) do
+    Regex.scan(symbol_regex, schematic_line, return: :index)
     |> List.flatten()
     |> Enum.map(fn {x_start, match_length} -> x_start end)
   end
 
-  defp get_intersecting_numbers(number_locations, symbol_adjacent_point_set) do
-    number_locations
-    |> Enum.filter(fn number -> number_intersects?(number, symbol_adjacent_point_set) end)
+  defp get_intersecting_numbers(number_points, symbol_adjacent_point_set) do
+    number_points
+    |> Enum.filter(fn number -> number_in_point_set?(number, symbol_adjacent_point_set) end)
     |> Enum.map(fn {_, {number, _}} -> number end)
   end
 
-  defp number_intersects?({y, {number, {x_start, x_end}}}, symbol_adjacent_point_set) do
+  defp number_in_point_set?({y, {number, {x_start, x_end}}}, point_set) do
     x_start..x_end
-    |> Enum.any?(fn x -> MapSet.member?(symbol_adjacent_point_set, {y, x}) end)
+    |> Enum.any?(fn x -> MapSet.member?(point_set, {y, x}) end)
   end
 end
