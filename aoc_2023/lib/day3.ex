@@ -124,7 +124,7 @@ defmodule Day3 do
   defp parse_symbol_points(schematic_line, symbol_regex) do
     Regex.scan(symbol_regex, schematic_line, return: :index)
     |> List.flatten()
-    |> Enum.map(fn {x_start, match_length} -> x_start end)
+    |> Enum.map(fn {x_start, _match_length} -> x_start end)
   end
 
   defp get_intersecting_numbers(number_points, symbol_adjacent_point_set) do
@@ -133,7 +133,7 @@ defmodule Day3 do
     |> Enum.map(fn {_, {number, _}} -> number end)
   end
 
-  defp number_in_point_set?({y, {number, {x_start, x_end}}}, point_set) do
+  defp number_in_point_set?({y, {_number, {x_start, x_end}}}, point_set) do
     x_start..x_end
     |> Enum.any?(fn x -> MapSet.member?(point_set, {y, x}) end)
   end
