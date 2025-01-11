@@ -7,32 +7,49 @@ defmodule Day4 do
   end
 
   def num_card_copies(cards) do
-    num_cards = InputParser.num_lines(cards)
-
     cards
     |> InputParser.stream_parsed_lines(&Card.new/1)
-    |> Enum.reduce(%{}, fn card, card_copies ->
-      n = Card.num_winning_numbers(card)
-      card_id = Card.card_id(card)
+    |> CardSet.new()
+    |> CardSet.sum_card_copies()
+  end
+end
 
-      own_copies = Map.get(card_copies, card_id, 1)
-      card_copies = Map.put(card_copies, card_id, own_copies)
-
-      if n == 0 do
-        card_copies
-      else
-        (card_id + 1)..(card_id + n)
-        |> Enum.reduce(card_copies, fn fut_card_id, card_copies ->
-          update_card_count(fut_card_id, card_copies, own_copies)
-        end)
-      end
-    end)
-    |> Enum.filter(fn {card_id, _} -> card_id <= num_cards end)
-    |> Enum.reduce(0, fn {_, card_count}, count_sum -> count_sum + card_count end)
+defmodule CardSet do
+  def new(card_enum) do
+    Map.new(card_enum, fn card -> {Card.id(card), card} end)
   end
 
-  defp update_card_count(card_id, card_copies, to_add) do
-    Map.update(card_copies, card_id, 2, fn existing -> existing + to_add end)
+  def get(card_set, id) do
+    card_set.get!(id)
+  end
+
+  def size(card_set) do
+    Enum.count(card_set)
+  end
+
+  def sum_card_copies(card_set) do
+    1..size(card_set)
+    |> Enum.reduce(card_set, fn card_id, updated_card_set ->
+      update_copies(updated_card_set, card_id)
+    end)
+    |> Enum.filter(fn {card_id, _} -> card_id <= size(card_set) end)
+    |> Enum.reduce(0, fn {_, card}, sum -> sum + Card.copies(card) end)
+  end
+
+  defp update_copies(card_set, card_id) do
+    card = card_set[card_id]
+    n = Card.num_winning_numbers(card)
+
+    if n == 0 do
+      card_set
+    else
+      (Card.id(card) + 1)..(Card.id(card) + n)
+      |> Enum.reduce(card_set, fn fut_card_id, new_card_set ->
+        Map.update!(new_card_set, fut_card_id, fn existing ->
+          Card.add_copies(existing, Card.copies(card))
+        end)
+      end)
+    end
   end
 end
 
@@ -40,11 +57,13 @@ defmodule Card do
   def new(card_string) do
     card_regex = ~r/^\s*Card\s*(\d+):\s*([^\|]+) \| (.*)$/
     [_, id, winning_numbers, my_numbers] = Regex.run(card_regex, card_string)
+    winning_numbers = parse_numbers(winning_numbers)
+    my_numbers = parse_numbers(my_numbers)
 
     %{
       id: String.to_integer(id),
-      winning_numbers: parse_numbers(winning_numbers),
-      my_numbers: parse_numbers(my_numbers)
+      num_winning_numbers: Enum.count(MapSet.intersection(winning_numbers, my_numbers)),
+      copies: 1
     }
   end
 
@@ -67,11 +86,20 @@ defmodule Card do
   end
 
   def num_winning_numbers(card) do
-    MapSet.intersection(card.winning_numbers, card.my_numbers)
-    |> Enum.count()
+    card.num_winning_numbers
   end
 
-  def card_id(card) do
+  def id(card) do
     card.id
+  end
+
+  def copies(card) do
+    card.copies
+  end
+
+  def add_copies(card, num_copies) do
+    Map.update!(card, :copies, fn current_copies ->
+      current_copies + num_copies
+    end)
   end
 end

@@ -10,6 +10,14 @@ defmodule TestDay4 do
     Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
   """
 
+  @test_cards2 """
+    Card   1: 1 2 3 | 1 2 3
+    Card   2: 1 2 3 | 1 2 3
+    Card   3: 1 2 | 1 2
+    Card   4: 1 | 1
+    Card   5: 1 | 2
+  """
+
   @actual_cards File.read!("data/day4.txt")
 
   test "sum of points: test cards" do
@@ -33,8 +41,12 @@ defmodule TestDay4 do
     assert Day4.num_card_copies(@test_cards) == 30
   end
 
-  @tag :pending
+  test "num card copies: test cards 2" do
+    assert Day4.num_card_copies(@test_cards2) ==
+             1 + (1 + 1) + (1 + 1 + 2) + (1 + 1 + 2 + 4) + (1 + 0 + 2 + 4 + 8)
+  end
+
   test "num card copies: actual cards" do
-    assert Day4.num_card_copies(@actual_cards) == 30
+    assert Day4.num_card_copies(@actual_cards) == 8_549_735
   end
 end
