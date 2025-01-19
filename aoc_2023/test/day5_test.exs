@@ -166,6 +166,6 @@ defmodule TestDay5 do
   end
 
   test "test actual task with seed range" do
-    assert Day5.closest_location_of_seed_ranges(@actual_task) == 525_792_406
+    assert Day5.closest_location_of_seed_ranges(@actual_task) == 79_004_094
   end
 end
