@@ -20,4 +20,19 @@ defmodule InputParser do
   def nonempty(string) do
     String.trim(string) != ""
   end
+
+  def nth_nonempty_line(input, n) do
+    stream_nonempty_lines(input)
+    |> Enum.at(n)
+  end
+
+  def remove_header_and_parse_integer_list(line, header) do
+    [_, rest] = String.split(line, header)
+
+    rest
+    |> String.trim()
+    |> String.split(~r/\s+/)
+    |> Enum.map(&String.trim/1)
+    |> Enum.map(&String.to_integer/1)
+  end
 end
