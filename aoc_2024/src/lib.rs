@@ -1,23 +1,31 @@
 use std::fs;
 use std::str::FromStr;
 use std::fmt::Debug;
+use std::slice::Iter;
 
 
-pub struct Matrix<T: Clone + Default> {
+pub struct TwoDimVec<T: Clone + Default> {
     pub values: Vec<Vec<T>>,
 }
 
-impl<T: Clone + Default + FromStr> Matrix<T> where <T as FromStr>::Err: Debug {
+impl<T: Clone + Default + FromStr> TwoDimVec<T> where <T as FromStr>::Err: Debug {
+    pub fn new(values: Vec<Vec<T>>) -> Self {
+        Self { values }
+    }
 
-    pub fn read_columns(file_path: &str) -> Matrix<T> {
+    pub fn read_columns(file_path: &str) -> Self {
         Self::read_rows(file_path).transpose()
     }
 
-    pub fn read_rows(file_path: &str) -> Matrix<T> {
+    pub fn read_rows(file_path: &str) -> Self {
         let contents = fs::read_to_string(file_path)
             .expect("Should have been able to read file");
 
-        let rows: Vec<Vec<T>> = contents.split("\n")
+        Self::read_rows_from_string(&contents)
+    }
+
+    pub fn read_rows_from_string(contents: &str) -> Self {
+        let values: Vec<Vec<T>> = contents.split("\n")
             .filter(|line| line.trim().len() > 0)
             .map(|line| {
                 line.split_whitespace()
@@ -29,47 +37,47 @@ impl<T: Clone + Default + FromStr> Matrix<T> where <T as FromStr>::Err: Debug {
             })
             .collect();
 
-        Matrix::new(rows).expect("Error parsing rows matrix")
+        TwoDimVec { values }
     }
 
-    pub fn new(matrix: Vec<Vec<T>>) -> Result<Matrix<T>, &'static str> {
-        let n = matrix.len();
-        if n == 0 {
-            return Err("no rows given");
+    pub fn ensure_non_empty_matrix(&self) -> Option<&Self> {
+        if self.n() == 0 {
+            panic!("no rows given");
         }
 
-        let m = matrix[0].len();
+        let m = self.values[0].len();
         if m == 0 {
-            return Err("first row empty");
+            panic!("first row empty");
         }
-        let row_iters = matrix.iter();
-        let row_lengths = row_iters.map(|row| row.len());
+        let row_lengths = self.iter_rows().map(|row| row.len());
         let min = row_lengths.clone().min().unwrap();
         let max = row_lengths.max().unwrap();
         if min != max {
-            return Err("row widths don't match");
+            panic!("row widths don't match");
         }
 
-        Ok( Matrix { values: matrix } )
+        Some(&self)
+    }
+
+    pub fn iter_rows(&self) -> Iter<'_, Vec<T>> {
+        self.values.iter()
     }
 
     fn n(&self) -> usize {
         self.values.len()
     }
 
-    fn m(&self) -> usize {
-        self.values[0].len()
-    }
-
     fn transpose(&self) -> Self {
-        let mut result: Vec<Vec<T>> = vec![vec![T::default(); self.n()]; self.m()];
+        self.ensure_non_empty_matrix();
+        let m = self.values[0].len();
+        let mut result: Vec<Vec<T>> = vec![vec![T::default(); self.n()]; m];
         for i in 0..self.n() {
-            for j in 0..self.m() {
+            for j in 0..m {
                 result[j][i] = self.values[i][j].clone();
             }
         }
 
-        Matrix {values: result}
+        TwoDimVec {values: result}
     }
 }
 

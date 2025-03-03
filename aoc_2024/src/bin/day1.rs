@@ -1,7 +1,7 @@
-use aoc_2024::Matrix;
+use aoc_2024::TwoDimVec;
 
 fn main() {
-    let data = Matrix::read_columns("data/day1.txt");
+    let data = TwoDimVec::read_columns("data/day1.txt");
     let dist = total_distance(&data);
     let sim = total_similarity(&data);
 
@@ -9,7 +9,8 @@ fn main() {
 }
 
 
-fn total_distance(matrix: &Matrix<u64>) -> u64 {
+fn total_distance(matrix: &TwoDimVec<u64>) -> u64 {
+    matrix.ensure_non_empty_matrix();
     let lists = matrix.values.clone();
     let mut lists_sorted = lists.clone();
     lists_sorted.iter_mut().for_each(|list| list.sort());
@@ -30,7 +31,8 @@ fn total_distance(matrix: &Matrix<u64>) -> u64 {
     result
 }
 
-fn total_similarity(matrix: &Matrix<u64>) -> u64 {
+fn total_similarity(matrix: &TwoDimVec<u64>) -> u64 {
+    matrix.ensure_non_empty_matrix();
     let left_list = &matrix.values[0];
     let mut right_list_sorted = matrix.values[1].clone();
     right_list_sorted.sort();
@@ -57,7 +59,7 @@ mod tests {
         let left_list = vec![3, 4, 2, 1, 3, 3];
         let right_list = vec![4, 3, 5, 3, 9, 3];
 
-        let matrix = Matrix::new(vec![left_list, right_list]).expect("invalid matrix");
+        let matrix = TwoDimVec::new(vec![left_list, right_list]);
         assert_eq!(total_distance(&matrix), 11);
     }
 
@@ -66,7 +68,7 @@ mod tests {
         let left_list = vec![3, 4, 2, 1, 3, 3];
         let right_list = vec![4, 3, 5, 3, 9, 3];
 
-        let matrix = Matrix::new(vec![left_list, right_list]).expect("invalid matrix");
+        let matrix = TwoDimVec::new(vec![left_list, right_list]);
         assert_eq!(total_similarity(&matrix), 31);
     }
 
