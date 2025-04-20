@@ -21,6 +21,19 @@ defmodule InputParser do
     String.trim(string) != ""
   end
 
+  def split_into_header_and_rest(input) do
+    {get_header(input), skip_header_and_empty_lines(input)}
+  end
+
+  def get_header(input) do
+    nth_nonempty_line(input, 0)
+  end
+
+  def skip_header_and_empty_lines(input) do
+    stream_nonempty_lines(input)
+    |> Enum.slice(1..num_lines(input))
+  end
+
   def nth_nonempty_line(input, n) do
     stream_nonempty_lines(input)
     |> Enum.at(n)
