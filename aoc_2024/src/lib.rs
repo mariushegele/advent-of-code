@@ -3,6 +3,19 @@ use std::str::FromStr;
 use std::fmt::Debug;
 use std::slice::Iter;
 
+pub fn read_rows_from_file(file_path: &str) -> Vec<String> {
+    fs::read_to_string(file_path)
+        .expect("Should have been able to read file")
+        .lines()
+        .map(String::from)
+        .collect()
+}
+
+pub fn read_file_to_string(file_path: &str) -> String {
+    fs::read_to_string(file_path)
+        .expect("Should have been able to read file")
+}
+
 
 pub struct TwoDimVec<T: Clone + Default> {
     pub values: Vec<Vec<T>>,

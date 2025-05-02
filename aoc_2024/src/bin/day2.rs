@@ -1,6 +1,5 @@
 use aoc_2024::TwoDimVec;
 use std::cmp::Ordering;
-use std::iter::zip;
 
 fn main() {
     let data = TwoDimVec::read_rows("data/day2.txt");
@@ -12,7 +11,6 @@ fn main() {
 
 
 fn num_safe_reports(matrix: &TwoDimVec<u64>, dampener: bool) -> usize {
-    let n_dampener: u32 = dampener as u32;
     let safe_reports: Vec<&Vec<u64>> = matrix.iter_rows()
         .filter(|row| is_safe(row, dampener))
         .collect();
