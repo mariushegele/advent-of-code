@@ -2,7 +2,7 @@ use aoc_2024::TwoDimVec;
 use std::cmp::Ordering;
 
 fn main() {
-    let data = TwoDimVec::read_rows("data/day2.txt");
+    let data = TwoDimVec::read_rows("data/day2.txt", " ");
     let n_a = num_safe_reports(&data, false);
     let n_b = num_safe_reports(&data, true);
 
@@ -96,7 +96,7 @@ mod tests {
 1 9 2 4 5
 2 1 2 3 4";
 
-        let data = TwoDimVec::read_rows_from_string(&data);
+        let data = TwoDimVec::read_rows_from_string(&data, " ");
         assert_eq!(num_safe_reports(&data, false), 2);
         assert_eq!(num_safe_reports(&data, true), 6);
     }

@@ -1,7 +1,7 @@
 use aoc_2024::TwoDimVec;
 
 fn main() {
-    let data = TwoDimVec::read_columns("data/day1.txt");
+    let data = TwoDimVec::read_columns("data/day1.txt", " ");
     let dist = total_distance(&data);
     let sim = total_similarity(&data);
 

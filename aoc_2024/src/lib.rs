@@ -2,6 +2,7 @@ use std::fs;
 use std::str::FromStr;
 use std::fmt::Debug;
 use std::slice::Iter;
+use std::iter::{zip, repeat};
 
 pub fn read_rows_from_file(file_path: &str) -> Vec<String> {
     fs::read_to_string(file_path)
@@ -26,22 +27,22 @@ impl<T: Clone + Default + FromStr> TwoDimVec<T> where <T as FromStr>::Err: Debug
         Self { values }
     }
 
-    pub fn read_columns(file_path: &str) -> Self {
-        Self::read_rows(file_path).transpose()
+    pub fn read_columns(file_path: &str, column_delimiter: &str) -> Self {
+        Self::read_rows(file_path, column_delimiter).transpose()
     }
 
-    pub fn read_rows(file_path: &str) -> Self {
+    pub fn read_rows(file_path: &str, column_delimiter: &str) -> Self {
         let contents = fs::read_to_string(file_path)
             .expect("Should have been able to read file");
 
-        Self::read_rows_from_string(&contents)
+        Self::read_rows_from_string(&contents, column_delimiter)
     }
 
-    pub fn read_rows_from_string(contents: &str) -> Self {
+    pub fn read_rows_from_string(contents: &str, column_delimiter: &str) -> Self {
         let values: Vec<Vec<T>> = contents.split("\n")
             .filter(|line| line.trim().len() > 0)
             .map(|line| {
-                line.split_whitespace()
+                line.split(column_delimiter)
                 .filter(|&element| !element.is_empty())
                 .map(|element| {
                     element.parse::<T>().expect("failed to parse element")
@@ -52,6 +53,23 @@ impl<T: Clone + Default + FromStr> TwoDimVec<T> where <T as FromStr>::Err: Debug
 
         TwoDimVec { values }
     }
+
+    pub fn at(&self, x: usize, y: usize) -> T {
+        self.values[x][y].clone()
+    }
+
+    pub fn slice(&self, xs: &[usize], ys: &[usize]) -> Vec<T> {
+        zip(xs, ys).map(|(x, y)| self.at(*x, *y)).collect()
+    }
+
+    pub fn horizontal_slice(&self, x: usize, ys: &[usize]) -> Vec<T> {
+        zip(repeat(x), ys).map(|(x, y)| self.at(x, *y)).collect()
+    }
+
+    pub fn vertical_slice(&self, xs: &[usize], y: usize) -> Vec<T> {
+        zip(xs, repeat(y)).map(|(x, y)| self.at(*x, y)).collect()
+    }
+
 
     pub fn ensure_non_empty_matrix(&self) -> Option<&Self> {
         if self.n() == 0 {
@@ -76,8 +94,13 @@ impl<T: Clone + Default + FromStr> TwoDimVec<T> where <T as FromStr>::Err: Debug
         self.values.iter()
     }
 
-    fn n(&self) -> usize {
+    pub fn n(&self) -> usize {
         self.values.len()
+    }
+
+    pub fn m(&self) -> usize {
+        self.ensure_non_empty_matrix();
+        self.values[0].len()
     }
 
     fn transpose(&self) -> Self {
