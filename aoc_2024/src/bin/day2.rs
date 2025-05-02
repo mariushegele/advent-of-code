@@ -1,5 +1,6 @@
 use aoc_2024::TwoDimVec;
 use std::cmp::Ordering;
+use std::iter::zip;
 
 fn main() {
     let data = TwoDimVec::read_rows("data/day2.txt");
@@ -11,6 +12,7 @@ fn main() {
 
 
 fn num_safe_reports(matrix: &TwoDimVec<u64>, dampener: bool) -> usize {
+    let n_dampener: u32 = dampener as u32;
     let safe_reports: Vec<&Vec<u64>> = matrix.iter_rows()
         .filter(|row| is_safe(row, dampener))
         .collect();
@@ -31,18 +33,13 @@ fn is_safe(values: &Vec<u64>, dampener: bool) -> bool {
     }
 
 
-    let mut cand1 = values.clone();
-    cand1.remove(invalid_index.unwrap());
-    let invalid_index1 = first_invalid_index(&cand1);
-    if invalid_index1 == None {
-        return true;
-    }
-
-    let mut cand2 = values.clone();
-    cand2.remove(invalid_index.unwrap() + 1);
-    let invalid_index2 = first_invalid_index(&cand2);
-    if invalid_index2 == None {
-        return true;
+    for i in 0..values.len() {
+        let mut candidate = values.clone();
+        candidate.remove(i);
+        let invalid_index = first_invalid_index(&candidate);
+        if invalid_index == None {
+            return true;
+        }
     }
 
     return false;
@@ -98,11 +95,12 @@ mod tests {
 1 3 2 4 5
 8 6 4 4 1
 1 3 6 7 9
-1 9 2 4 5";
+1 9 2 4 5
+2 1 2 3 4";
 
         let data = TwoDimVec::read_rows_from_string(&data);
         assert_eq!(num_safe_reports(&data, false), 2);
-        assert_eq!(num_safe_reports(&data, true), 5);
+        assert_eq!(num_safe_reports(&data, true), 6);
     }
 
 }
