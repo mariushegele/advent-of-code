@@ -1,4 +1,5 @@
-use std::fmt::Debug;
+use std::collections::HashSet;
+use std::fmt::{Debug, Display};
 use std::fs;
 use std::iter::{repeat, zip};
 use std::slice::Iter;
@@ -21,7 +22,7 @@ pub struct TwoDimVec<T: Clone + Default> {
     pub values: Vec<Vec<T>>,
 }
 
-impl<T: Clone + Default + FromStr + PartialEq> TwoDimVec<T>
+impl<T: Clone + Default + FromStr + PartialEq + Display> TwoDimVec<T>
 where
     <T as FromStr>::Err: Debug,
 {
@@ -143,5 +144,25 @@ where
     pub fn first_matching_index(&self, options: &[T]) -> Option<(usize, usize, &T)> {
         self.enumerate_values()
             .find(|(_i, _j, v)| options.contains(v))
+    }
+
+    pub fn display_with_overlay(
+        &self,
+        overlay: &HashSet<(usize, usize)>,
+        overlay_value: &T,
+        if_value: &T,
+    ) {
+        for x in 0..self.n() {
+            for y in 0..self.m() {
+                let value = self.at(x, y);
+                if &value == if_value && overlay.contains(&(x, y)) {
+                    print!("{overlay_value}");
+                } else {
+                    print!("{value}")
+                }
+            }
+
+            println!();
+        }
     }
 }
