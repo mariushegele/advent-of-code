@@ -4,7 +4,6 @@ use std::fs;
 use std::iter::{repeat, zip};
 use std::slice::Iter;
 use std::str::FromStr;
-
 pub fn read_rows_from_file(file_path: &str) -> Vec<String> {
     fs::read_to_string(file_path)
         .expect("Should have been able to read file")
@@ -16,6 +15,8 @@ pub fn read_rows_from_file(file_path: &str) -> Vec<String> {
 pub fn read_file_to_string(file_path: &str) -> String {
     fs::read_to_string(file_path).expect("Should have been able to read file")
 }
+
+pub type Position = (usize, usize);
 
 #[derive(Clone)]
 pub struct TwoDimVec<T: Clone + Default> {
@@ -55,28 +56,32 @@ where
         TwoDimVec { values }
     }
 
-    pub fn at(&self, x: usize, y: usize) -> T {
-        self.values[x][y].clone()
+    pub fn at(&self, y: usize, x: usize) -> T {
+        self.values[y][x].clone()
     }
 
-    pub fn get(&self, x: usize, y: usize) -> Option<&T> {
-        if let Some(row) = self.values.get(x) {
-            row.get(y)
+    pub fn get(&self, y: usize, x: usize) -> Option<&T> {
+        if let Some(row) = self.values.get(y) {
+            row.get(x)
         } else {
             None
         }
     }
 
-    pub fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut T> {
-        if let Some(row) = self.values.get_mut(x) {
-            row.get_mut(y)
+    pub fn contains(&self, y: usize, x: usize) -> bool {
+        self.get(x, y).is_some()
+    }
+
+    pub fn get_mut(&mut self, y: usize, x: usize) -> Option<&mut T> {
+        if let Some(row) = self.values.get_mut(y) {
+            row.get_mut(x)
         } else {
             None
         }
     }
 
     pub fn slice(&self, xs: &[usize], ys: &[usize]) -> Vec<T> {
-        zip(xs, ys).map(|(x, y)| self.at(*x, *y)).collect()
+        zip(xs, ys).map(|(x, y)| self.at(*y, *x)).collect()
     }
 
     pub fn horizontal_slice(&self, x: usize, ys: &[usize]) -> Vec<T> {
@@ -125,6 +130,24 @@ where
     pub fn m(&self) -> usize {
         self.ensure_non_empty_matrix();
         self.values[0].len()
+    }
+
+    pub fn get_neighbours(&self, (y, x): Position) -> Vec<Position> {
+        // not diagonal
+        let mut neighbours = vec![];
+        if y > 0 {
+            neighbours.push((y - 1, x));
+        }
+        if x > 0 {
+            neighbours.push((y, x - 1));
+        }
+        if y + 1 < self.n() {
+            neighbours.push((y + 1, x));
+        }
+        if x + 1 < self.m() {
+            neighbours.push((y, x + 1));
+        }
+        neighbours
     }
 
     #[allow(clippy::needless_range_loop)]
